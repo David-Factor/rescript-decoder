@@ -1,0 +1,28 @@
+{
+  "$schema": "https://raw.githubusercontent.com/rescript-lang/rescript-compiler/master/docs/docson/build-schema.json",
+  "name": "rescript-project-template",
+  "bsc-flags": ["-bs-super-errors", "-open Belt"],
+  "version": "0.0.1",
+  "sources": [
+    {
+      "dir" : "src",
+      "subdirs" : true
+    },
+    {
+      "dir": "tests",
+      "subdirs": true,
+      "type": "dev"
+    }
+  ],
+  "package-specs": {
+    "module": "commonjs",
+    "in-source": true
+  },
+  "suffix": ".bs.js",
+  "bs-dependencies": [
+    "rescript-test"
+  ],
+  "warnings": {
+    "error" : "+101"
+  }
+}
