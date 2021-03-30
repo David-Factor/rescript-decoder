@@ -10,6 +10,14 @@ type decoder<'a> = value => result<'a, error>
 
 let failure = (msg, json) => Failure(`Expecting ${msg}`, json)->Error
 
+let float = json => {
+  open Js
+  switch json {
+  | Json.JSONNumber(v) => Ok(v)
+  | _ => failure(`a FLOAT`, json)
+  }
+}
+
 let string = json => {
   open Js
   switch json {
@@ -22,7 +30,7 @@ let bool = json => {
   switch json {
   | Js.Json.JSONTrue => Ok(true)
   | Js.Json.JSONFalse => Ok(false)
-  | _ => failure(`a STRING`, json)
+  | _ => failure(`a BOOLEAN`, json)
   }
 }
 
@@ -42,6 +50,26 @@ let field = (name, decoder, json) => {
     }
   | _ => toFailure
   }
+}
+
+let rec oneOfHelp = (
+  decoders: list<decoder<'a>>,
+  json: value,
+  acc: result<'a, list<error>>,
+): result<'b, list<error>> => {
+  switch decoders {
+  | list{} => ResultExtra.mapError(acc, List.reverse)
+  | list{first, ...rest} =>
+    switch first(json) {
+    | Ok(val) => Ok(val)
+    | Error(err) => oneOfHelp(rest, json, ResultExtra.mapError(acc, errs => List.add(errs, err)))
+    }
+  }
+}
+
+let oneOf = (decoders: list<decoder<'a>>): decoder<'a> => {
+  (json: value) =>
+    oneOfHelp(decoders, json, Error(list{}))->ResultExtra.mapError(_, errs => OneOf(errs))
 }
 
 let at = (path, decoder) => Array.reduceReverse2(path, decoder, field)
